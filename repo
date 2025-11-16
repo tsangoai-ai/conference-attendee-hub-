@@ -1,0 +1,11 @@
+# Unzip the starter to a new folder
+unzip conference-attendee-hub.zip
+cd conference-attendee-hub
+
+# Initialize and push to your new GitHub repo
+git init
+git add -A
+git commit -m "chore: bootstrap Conference Attendee Hub"
+git branch -M main
+git remote add origin https://github.com/<you>/conference-attendee-hub.git
+git push -u origin main
