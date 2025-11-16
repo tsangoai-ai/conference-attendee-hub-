@@ -1,0 +1,28 @@
+{
+  "name": "conference-attendee-hub",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:ui": "vitest",
+    "deploy:rules": "firebase deploy --only firestore:rules",
+    "admin:make": "node scripts/make-admin.mjs"
+  },
+  "dependencies": {
+    "firebase": "^11.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "firebase-tools": "^13.7.2",
+    "jsdom": "^26.0.0",
+    "vite": "^5.4.10",
+    "vitest": "^2.1.5"
+  }
+}

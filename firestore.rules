@@ -1,0 +1,51 @@
+rules_version = '2';
+service cloud.firestore {
+  function isSignedIn() { return request.auth != null; }
+  function isSelf(uid) { return isSignedIn() && request.auth.uid == uid; }
+  function isAdmin(appId) {
+    return isSignedIn() &&
+      exists(/databases/$(database)/documents/artifacts/$(appId)/admins/$(request.auth.uid));
+  }
+  function isNonEmptyString(x) { return x is string && x.size() > 0 && x.size() <= 1024; }
+  function isIsoDateTime(s) { return s is string && s.matches('^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2})?$'); }
+
+  match /databases/{database}/documents {
+    match /artifacts/{appId}/admins/{uid} {
+      allow get: if isSelf(uid) || isAdmin(appId);
+      allow list: if isAdmin(appId);
+      allow create, update, delete: if isAdmin(appId);
+    }
+
+    match /artifacts/{appId}/public/data/conference_schedule/{sessionId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin(appId)
+        && isNonEmptyString(request.resource.data.title)
+        && isNonEmptyString(request.resource.data.room)
+        && isNonEmptyString(request.resource.data.speaker)
+        && isIsoDateTime(request.resource.data.startISO)
+        && isIsoDateTime(request.resource.data.endISO)
+        && isNonEmptyString(request.resource.data.summary)
+        && request.resource.data.keys().hasOnly(['title','room','speaker','startISO','endISO','summary']);
+    }
+
+    match /artifacts/{appId}/users/{userId}/conference_data {
+      match /user_profile {
+        allow read, update, create, delete: if isSelf(userId)
+          && (request.method != 'create' || request.resource.data.keys().hasOnly(['attendingSessions']))
+          && (request.resource.data.attendingSessions is list || !('attendingSessions' in request.resource.data))
+          && (!('attendingSessions' in request.resource.data) || request.resource.data.attendingSessions.size() <= 200);
+      }
+      match /session_feedback/{feedbackId} {
+        allow read, update, delete: if isSelf(userId);
+        allow create: if isSelf(userId)
+          && request.resource.data.keys().hasOnly(['sessionId','rating','comment','createdAt'])
+          && request.resource.data.sessionId is string
+          && request.resource.data.rating is int
+          && request.resource.data.rating >= 1 && request.resource.data.rating <= 5
+          && request.resource.data.comment is string
+          && request.resource.data.comment.size() <= 2000
+          && request.resource.data.createdAt is timestamp;
+      }
+    }
+  }
+}
